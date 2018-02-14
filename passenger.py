@@ -13,6 +13,7 @@ class Passenger:
         # fare = 0  # FARE
         self.sex = None  # SEX
         self.survived = 0  # Survived
+        self.passengerID = 0
 
     # Getter and Setter
     def set_pclass(self, pclass):
@@ -23,6 +24,9 @@ class Passenger:
             self.survived = survived.not_survived
         elif survive == 1:
             self.survived = survived.survived
+
+    def set_passengerid(self,id):
+        self.passengerID = id
 
     def set_sex(self, sexString):
         if sexString == self.FEMALE:

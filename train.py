@@ -6,7 +6,9 @@ from constant_type import survived
 from constant_type import sex
 
 df = pd.read_csv('train.csv')
+df_t = pd.read_csv('test.csv')
 passengers = []
+validation_passengers = []
 probability = []
 
 for i in range(0, 800):
@@ -16,6 +18,15 @@ for i in range(0, 800):
     passenger.set_sex(df['Sex'][i])
     passenger.set_survived(df['Survived'][i])
     passengers.append(passenger)
+
+for i in range(0, 418):
+    passenger = Passenger()
+    passenger.set_pclass(df_t['Pclass'][i])
+    passenger.set_age(df_t['Age'][i])
+    passenger.set_sex(df_t['Sex'][i])
+    passenger.set_passengerid(df_t['PassengerId'][i])
+    validation_passengers.append(passenger)
+
 
 
 def test():
@@ -32,7 +43,8 @@ def predict(array, passen, passengers):
     # for different labels
     for i in range(0, 2):
         givenProb = 1
-        givenProb *= array[i].age_count[int(passen.age) - 1] / array[i].lapace_counts
+        if not math.isnan(passen.age):
+           givenProb *= array[i].age_count[int(passen.age) - 1] / array[i].lapace_counts
         givenProb *= array[i].pclass_count[passen.pclass - 1] / array[i].lapace_counts
         givenProb *= array[i].sex_count[passen.sex.value] / array[i].lapace_counts
         givenProb *= array[i].counts / len(passengers)
@@ -64,7 +76,6 @@ def train(array):
                 not_survived_label.age_count[int(array[i].age) - 1] += 1
             not_survived_label.sex_count[array[i].sex.value] += 1
             not_survived_label.pclass_count[array[i].pclass - 1] += 1
-
     survived_label.lapace_correction()
     not_survived_label.lapace_correction()
     labels_probability.append(survived_label)
@@ -75,11 +86,30 @@ def train(array):
 
 test_passenger = Passenger()
 test_passenger.sex = sex.male
-test_passenger.age = 19
+test_passenger.age = 25
 test_passenger.pclass = 3
 
+# Model training
+trained_weight = train(passengers)
+#print(predict(trained_weight, test_passenger, passengers))
+# Kaggle Prediction
 
-## prediction
-print(predict(train(passengers),test_passenger,passengers))
+survive = []
+id = []
 
-# TODO:: Validation Tuning
+for i in range(0, 418):
+    validation_passengers[i].survived = predict(trained_weight, validation_passengers[i], passengers)
+    if validation_passengers[i].survived == survived.survived:
+        survive.append(1)
+    elif validation_passengers[i].survived == survived.not_survived:
+        survive.append(0)
+    id.append(validation_passengers[i].passengerID)
+
+raw_data = {"PassengerId": id,
+        "Survived": survive
+       }
+df = pd.DataFrame(raw_data, columns = ['PassengerId', 'Survived'])
+df.to_csv('submit.csv',index=False)
+
+
+
